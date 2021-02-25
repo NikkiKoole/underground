@@ -9,10 +9,7 @@
 --http://arindam-1993.blogspot.com/2016/09/metaballs-using-marching-squares-in.html
 -- https://jasonwebb.github.io/reaction-diffusion-playground/
 
-
 local inspect = require 'inspect'
-
-
 
 -- ui stuff
 function pointInRect(x,y, rx, ry, rw, rh)
@@ -126,7 +123,7 @@ function love.load()
    grid = {}
    --noise()
 
-   vg = {vRes=16, cRes=3, size=800, xOff = 20, yOff=20, chunks={}}
+   vg = {vRes=32, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
    simpleChunkyGrid(vg.vRes, vg.cRes, vg.size)
 
 
@@ -201,15 +198,18 @@ function love.draw()
    love.graphics.setWireframe(false)
    for i = 1, #vg.chunks do
       local chunk = vg.chunks[i]
+      if (chunk.mesh) then
       love.graphics.draw(chunk.mesh,
                          vg.xOff + chunk.pos[1],
                          vg.yOff + chunk.pos[2])
+      end
    end
 
    
-   
-   love.graphics.setWireframe(false)
+
    -- debug draw
+
+   love.graphics.setWireframe(false)
   
     for i = 1, #vg.chunks do
        local chunk = vg.chunks[i]
@@ -223,10 +223,34 @@ function love.draw()
 
              end
              
+             -- love.graphics.rectangle('fill',
+             --                         vg.xOff + chunk.pos[1] + x*voxelSize,
+             --                         vg.yOff + chunk.pos[2] + y*voxelSize,
+             --                         voxelSize/4, voxelSize/4)
+
+             --print(i, x,y,voxelIndex)
+             --love.graphics.setColor(0,0,1, .3)
+
+             local dotSize = voxelSize/3
              love.graphics.rectangle('fill',
-                                     vg.xOff + chunk.pos[1] + x*voxelSize,
-                                     vg.yOff + chunk.pos[2] + y*voxelSize,
-                                     voxelSize/4, voxelSize/4)
+                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].position.x  - (dotSize/2),
+                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].position.y - (dotSize/2),
+                                     dotSize, dotSize)
+
+             love.graphics.setColor(0,0,0, .3)
+             local edgeDotSize = voxelSize/8
+             love.graphics.rectangle('fill',
+                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].xEdgePosition.x  - (edgeDotSize/2),
+                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].xEdgePosition.y - (edgeDotSize/2),
+                                     edgeDotSize, edgeDotSize)
+
+             love.graphics.rectangle('fill',
+                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].yEdgePosition.x  - (edgeDotSize/2),
+                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].yEdgePosition.y - (edgeDotSize/2),
+                                     edgeDotSize, edgeDotSize)
+             
+             
+             
           end
        end
        
@@ -256,7 +280,12 @@ function love.draw()
             
              if (chunkIndex <= vg.cRes^2 and voxelIndex <= vg.vRes^2) then
                 vg.chunks[chunkIndex].voxels[voxelIndex].state = love.mouse.isDown(1 )  and 1 or 0 
-                vg.chunks[chunkIndex].mesh = createMeshGrid(vg.vRes, chunkSize, vg.chunks[chunkIndex].voxels)
+                vg.chunks[chunkIndex].meshOld = createMeshGrid(vg.vRes, chunkSize, vg.chunks[chunkIndex].voxels)
+                
+                local v, t = triangulateChunk(vg.chunks[chunkIndex].voxels)
+
+                vg.chunks[chunkIndex].mesh = makeMesh(v,t)
+
              end
              
           end
@@ -267,8 +296,152 @@ function love.draw()
    love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 0, 0)
 end
 
+function makeMesh(vertices, triangles)
+   local simple_format = {
+      {"VertexPosition", "float", 3} -- The x,y position of each vertex.
+   }
+   if (#vertices == 0) then return nil end
+   print(#vertices)
+   local mesh = love.graphics.newMesh(simple_format, vertices, 'triangles')
+   mesh:setVertexMap(triangles)
+   --mesh:setDrawRange(1, 6)
+   
+   return mesh
+end
 
 
+function triangulateChunk(voxels)
+   local vertices = {}
+   local triangles = {}
+   local vRes = vg.vRes
+
+
+   function addPentagon(a,b,c,d,e)
+      local vertexIndex = #vertices + 1
+      table.insert(vertices, {a.x, a.y, 0})
+      table.insert(vertices, {b.x, b.y, 0})
+      table.insert(vertices, {c.x, c.y, 0})
+      table.insert(vertices, {d.x, d.y, 0})
+      table.insert(vertices, {e.x, e.y, 0})
+
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 1)
+      table.insert(triangles, vertexIndex + 2)
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 2)
+      table.insert(triangles, vertexIndex + 3)
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 3)
+      table.insert(triangles, vertexIndex + 4)
+
+   end
+   
+   function addQuad(a,b,c,d)
+      local vertexIndex = #vertices + 1
+      table.insert(vertices, {a.x, a.y, 0})
+      table.insert(vertices, {b.x, b.y, 0})
+      table.insert(vertices, {c.x, c.y, 0})
+      table.insert(vertices, {d.x, d.y, 0})
+
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 1)
+      table.insert(triangles, vertexIndex + 2)
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 2)
+      table.insert(triangles, vertexIndex + 3)
+   end
+   
+   
+   function addTriangle(a,b,c)
+      local vertexIndex = #vertices + 1
+      table.insert(vertices, {a.x, a.y, 0})
+      table.insert(vertices, {b.x, b.y, 0})
+      table.insert(vertices, {c.x, c.y, 0})
+
+      table.insert(triangles, vertexIndex)
+      table.insert(triangles, vertexIndex + 1)
+      table.insert(triangles, vertexIndex + 2)
+   end
+   
+   function triangulateCell(a, b, c, d)
+      local cellType = 0
+      if (a.state == 1) then
+         cellType = cellType + 1
+      end
+      if (b.state == 1) then
+         cellType = cellType + 2
+      end
+      if (c.state == 1) then
+         cellType = cellType + 4
+      end
+      if (d.state == 1) then
+         cellType = cellType + 8
+      end
+
+      assert(cellType >= 0 and cellType <= 15)
+      
+      if     cellType == 0 then
+      elseif cellType == 1 then
+         addTriangle(a.position, a.yEdgePosition, a.xEdgePosition)
+      elseif cellType == 2 then
+         addTriangle(b.position, a.xEdgePosition, b.yEdgePosition);
+      elseif cellType == 3 then
+         addQuad(a.position, a.yEdgePosition, b.yEdgePosition, b.position);
+      elseif cellType == 4 then
+         addTriangle(c.position, c.xEdgePosition, a.yEdgePosition);
+      elseif cellType == 5 then
+         addQuad(a.position, c.position, c.xEdgePosition, a.xEdgePosition);
+      elseif cellType == 6 then
+         -- special
+         addTriangle(b.position, a.xEdgePosition, b.yEdgePosition);
+         addTriangle(c.position, c.xEdgePosition, a.yEdgePosition);
+      elseif cellType == 7 then
+         addPentagon(a.position, c.position, c.xEdgePosition, b.yEdgePosition, b.position);
+      elseif cellType == 8 then
+         addTriangle(d.position, b.yEdgePosition, c.xEdgePosition);
+      elseif cellType == 9 then
+         addTriangle(a.position, a.yEdgePosition, a.xEdgePosition);
+         addTriangle(d.position, b.yEdgePosition, c.xEdgePosition);
+      elseif cellType == 10 then
+         addQuad(a.xEdgePosition, c.xEdgePosition, d.position, b.position);
+      elseif cellType == 11 then
+         addPentagon(b.position, a.position, a.yEdgePosition, c.xEdgePosition, d.position);
+      elseif cellType == 12 then
+         addQuad(a.yEdgePosition, c.position, d.position, b.yEdgePosition);
+      elseif cellType == 13 then
+         addPentagon(c.position, d.position, b.yEdgePosition, a.xEdgePosition, a.position);
+      elseif cellType == 14 then
+         addPentagon(d.position, b.position, a.xEdgePosition, a.yEdgePosition, c.position);
+      elseif cellType == 15 then
+         addQuad(a.position, c.position, d.position, b.position);
+      end
+      
+      
+   end
+   
+   
+   function triangulateCellRows(voxels) 
+      local cells = vRes-1
+      local index = 1
+      for y = 0, cells-1 do
+         for x= 0, cells-1 do
+            --print(index, index+1, index + vRes, index + vRes + 1)
+
+            triangulateCell(voxels[index] ,
+                            voxels[index+1],
+                            voxels[index + vRes],
+                            voxels[index +vRes + 1])
+                            
+            index = index +1
+         end
+         index = index + 1
+      end
+      
+   end
+   
+   triangulateCellRows(voxels, vertices, triangles)
+   return vertices, triangles
+end
 
 
 
@@ -300,20 +473,34 @@ function simpleChunkyGrid(vRes, cRes, size)
    function createVoxels()
       local result = {}
       local index = 1
-      for y = 0, vRes do   -- the -1 here is questionable
-         for x = 0, vRes do
-            result[index] = {state=polarize(love.math.random()), x=x, y=y}
+      for y = 0, vRes-1 do 
+         for x = 0, vRes-1 do
+            local position = {x=(x+.5)*voxelSize, y=(y+.5)*voxelSize}
+            result[index] = {
+               state = polarize(love.math.random()),
+               position = position,
+               xEdgePosition = {x=position.x + (voxelSize*.5), y=position.y},
+               yEdgePosition = {x=position.x, y=position.y + (voxelSize*.5)},
+            }
             index = index + 1
          end
       end
       return result
    end
+
+
    
    
    function initChunk(resolution, size)
       local result = {}
       result.voxels = createVoxels()
-      result.mesh = createMeshGrid(resolution, size, result.voxels)
+
+      local v,t = triangulateChunk(result.voxels)
+
+      result.mesh = makeMesh(v,t)
+
+--      print(inspect(result.voxels))
+      result.meshOld = createMeshGrid(resolution, size, result.voxels)
       return result
    end
    
@@ -338,21 +525,18 @@ end
 function createMeshGrid(resolution, size, voxels)
 
    -- vertices
-   ------
    local vertices = {}
    local v = 1
    local stepSize = 1.0/resolution
    for y = 0, resolution do
       for x = 0, resolution do
-         vertices[v] = { x * stepSize  , y * stepSize  , 0 } 
+         vertices[v] = { x * stepSize , y * stepSize , 0 } 
          v = v + 1
       end
    end
-   -------
-
+   
 
    -- triangle indices
-   ------
    local tris = {}
    local t = 1
    local v1= 1
@@ -390,7 +574,7 @@ function createMeshGrid(resolution, size, voxels)
       vertices[i][1] =  vertices[i][1] * size  
       vertices[i][2] =  vertices[i][2] * size 
    end
-   
+
    local mesh = love.graphics.newMesh(simple_format, vertices, 'triangles')
    mesh:setVertexMap(tris)
    --mesh:setDrawRange(1, 6)
