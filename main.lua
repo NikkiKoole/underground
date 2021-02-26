@@ -66,6 +66,61 @@ function labelButton(x,y,label, selected )
       clicked=result
    }
 end
+
+function mapInto(x, in_min, in_max, out_min, out_max)
+   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
+function h_slider(id, x, y, width, v, min, max)
+   love.graphics.setColor(0.3, 0.3, 0.3)
+   love.graphics.rectangle('fill',x,y+8,width,3 )
+   love.graphics.setColor(0, 0, 0)
+   local xOffset = mapInto(v, min, max, 0, width-20)
+   love.graphics.rectangle('fill',xOffset + x,y,20,20 )
+   love.graphics.setColor(1,1,1,1)
+   love.graphics.rectangle("line", xOffset + x,y,20,20)
+
+   local result= nil
+   local draggedResult = false
+   local mx, my = love.mouse.getPosition( )
+   local hover = false
+   if pointInRect(mx,my, xOffset+x,y,20,20) then
+      hover = true
+   end
+
+   if hover then
+      mouseState.hoveredSomething = true
+      love.mouse.setCursor(cursors.hand)
+      if mouseState.click then
+         lastDraggedElement = {id=id}
+	 mouseState.hoveredSomething = true
+
+	 mouseState.offset = {x=(xOffset+x) - mx, y=my-y}
+
+      end
+   end
+
+   if love.mouse.isDown(1 ) then
+      if lastDraggedElement and lastDraggedElement.id == id then
+	 mouseState.hoveredSomething = true
+	 love.mouse.setCursor(cursors.hand)
+         local mx, my = love.mouse.getPosition( )
+         result = mapInto(mx + mouseState.offset.x, x, x+width-20, min, max)
+	 if result < min then
+	    result = nil
+	 else
+
+         result = math.max(result, min)
+         result = math.min(result, max)
+	 end
+
+      end
+   end
+   return {
+      value=result
+   }
+end
+
 function getUIRect(id, x,y,w,h)
   local result = false
   if mouseState.click then
@@ -99,21 +154,21 @@ function noise()
    local offsetX = love.math.random() * 2^12
    local offsetY = love.math.random() * 2^12
 
-   local octaves = {3*13*4, 3*13*3, 3*13*.33}
-   for x = 1, 128 do
-      for y = 1, 128 do
+   local octaves = {13*4, 13*3, 13*.33}
+   for x = 1, 128*3 do
+      for y = 1, 128*3 do
          grid[x] = grid[x] or {}
 
          local octave1 =  love.math.noise((offsetX + x)/octaves[1], (offsetY + y)/octaves[1])
          local octave2 =  love.math.noise((offsetX + x)/octaves[2], (offsetY + y)/octaves[2])
          local octave3 =  love.math.noise((offsetX + x)/octaves[3], (offsetY +  y)/octaves[3])
-         grid[x][y] = polarize(octave1*.33 + octave2*.33 + octave3*.33) 
+         grid[x][y] = polarize(octave1*.33 + octave2*.33 + octave3*.13) 
       end
    end
 end
 
 function love.load()
-   love.window.setMode(1124, 1124, {resizable=true, vsync=true, fullscreen=false})
+
    colors = {
       bg    = {.95, .89, .73},
       sand  = {.79, .73, .59},
@@ -122,8 +177,9 @@ function love.load()
    }
    grid = {}
    noise()
-
-   vg = {vRes=128, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
+   
+   vg = {vRes=16, cRes=3, size=1000, xOff = 20, yOff=20, chunks={}}
+   print(((vg.vRes * vg.cRes)^2)..' cells to render')
    simpleChunkyGrid(vg.vRes, vg.cRes, vg.size)
 
 
@@ -141,8 +197,10 @@ function love.load()
       arrow= love.mouse.getSystemCursor("arrow")
    }
     -- ui tsuff
-
-    fillType = 'filled'
+    
+    fillType = 'filled'     -- empty
+    brushSize = 3.5
+    brushType = 'rectangle' -- 'circle'
 end
 
 
@@ -158,56 +216,68 @@ end
 
 
 function drawUI()
-   -- local runningX = vg.size + 20
-   -- love.graphics.print('fill type', runningX, 10)
-   -- runningX = runningX + love.graphics.getFont():getWidth('fill type') + 20
-   -- local filled = labelButton( runningX, 10, 'filled',  fillType == 'filled')
-   -- if filled.clicked then
-   --    fillType = 'filled'
-   -- end
+   local runningX
+   local runningY
+   runningY = 10
+
+   function resetX()
+      runningX = vg.size + 20
+   end
    
-   -- runningX = runningX + love.graphics.getFont():getWidth('filled') + 20
-   -- local empty = labelButton( runningX, 10, 'empty', fillType == 'empty')
-   -- if empty.clicked then
-   --     fillType = 'empty'
-   -- end
-   
-
-end
-
-
-function love.draw()
-   local chunkSize = vg.size / vg.cRes
-   local voxelSize = chunkSize /  vg.vRes
-   
-   handleMouseClickStart()
-   love.graphics.clear(1,0,0)
-
+   function getStrWidth(str)
+      return love.graphics.getFont():getWidth(str) + 20
+   end
   
-   
-   love.graphics.setColor(1,1,1)
+   resetX()
 
    
-   drawUI()
+   --local runningX = vg.size + 20
 
-   
-   
-   --local  m = createMeshGrid(8,500)
+   love.graphics.print('fill type', runningX, runningY)
+   runningX = runningX + getStrWidth('fillType')
 
-   
-   love.graphics.setWireframe(false)
-   for i = 1, #vg.chunks do
-      local chunk = vg.chunks[i]
-      if (chunk.mesh) then
-      love.graphics.draw(chunk.mesh,
-                         vg.xOff + chunk.pos[1],
-                         vg.yOff + chunk.pos[2])
-      end
+   if labelButton( runningX, runningY, 'filled',  fillType == 'filled').clicked then
+      fillType = 'filled'
    end
 
+   runningX = runningX + getStrWidth('filled')
    
+   if labelButton( runningX, runningY, 'empty',  fillType == 'empty').clicked then
+      fillType = 'empty'
+   end
+   
+   runningX = runningX + getStrWidth('empty')
 
-   -- debug draw
+   resetX()
+
+   local br = h_slider('size', runningX, 40, 100, brushSize, 3.5, vg.size/8)
+   if br.value then
+      brushSize = br.value
+   end
+   runningX = runningX + 100 + 20
+   love.graphics.print('brushSize: '..math.floor(brushSize*10)/10, runningX, 40)
+
+   runningX = vg.size + 20
+   love.graphics.print('brushType: ', runningX, 60)
+   runningX = runningX  + getStrWidth('brushType: ')
+
+   if labelButton( runningX, 60, 'point',  brushType == 'point').clicked then
+      brushType = 'point'
+   end
+   runningX = runningX + getStrWidth('point')
+   
+  if labelButton( runningX, 60, 'rectangle',  brushType == 'rectangle').clicked then
+      brushType = 'rectangle'
+   end
+  runningX = runningX + getStrWidth('rectangle')
+  
+   if labelButton( runningX, 60, 'circle',  brushType == 'circle').clicked then
+      brushType = 'circle'
+   end
+end
+
+function debugDraw()
+    -- debug draw
 
    love.graphics.setWireframe(false)
   
@@ -254,62 +324,169 @@ function love.draw()
           end
        end
        
-      --love.graphics.draw(chunk.mesh, chunk.pos[1], chunk.pos[2])
+       --love.graphics.draw(chunk.mesh, chunk.pos[1], chunk.pos[2])
+    end
+end
+
+function editVoxels(mx, my)
+   local px = mx
+   local py = my
+   local chunkSize = vg.size / vg.cRes
+   local voxelSize = chunkSize /  vg.vRes
+   
+   
+   local xStart = mx - (math.floor(brushSize-2))
+   local xEnd = mx + (math.floor(brushSize-2))
+   local yStart = my - (math.floor(brushSize-2))
+   local yEnd = my + (math.floor(brushSize-2))
+      
+   if brushType == 'rectangle' then
+     
+      love.graphics.setColor(0,1,0)
+      love.graphics.rectangle('fill', vg.xOff+ xStart, vg.yOff + yStart, xEnd-xStart, yEnd-yStart)
+   end
+   if brushType == 'circle' then
+      love.graphics.setColor(0,1,0)
+      love.graphics.circle('fill', vg.xOff+ mx, vg.yOff + my, brushSize)
    end
    
-    --love.graphics.draw(m, 10, 10)
+   --print(xStart, xEnd)
+   local chunkIndices = {}
 
-    if love.mouse.isDown(1 ) or love.mouse.isDown(2 ) then
-       
-       local mx, my = love.mouse.getPosition()
-       if mx >=vg.xOff and mx <= vg.size + vg.xOff then
-          if my >= vg.yOff and my <= vg.size  + vg.yOff then
-             mx = mx - vg.xOff
-             my = my - vg.yOff
-             
-             local voxelX = math.floor(mx / voxelSize)
-             local voxelY = math.floor(my / voxelSize)
-             local chunkX = math.floor(voxelX / vg.vRes)
-             local chunkY = math.floor(voxelY / vg.vRes)
-             -- make it use the local voxels
-             voxelX = voxelX -  chunkX * vg.vRes
-             voxelY = voxelY - chunkY * vg.vRes
-             
-             local chunkIndex = (chunkY * vg.cRes + chunkX) + 1
-             local voxelIndex = (voxelY * vg.vRes + voxelX) + 1
-            
-             if (chunkIndex <= vg.cRes^2 and voxelIndex <= vg.vRes^2) then
-                vg.chunks[chunkIndex].voxels[voxelIndex].state = love.mouse.isDown(1 )  and 1 or 0 
-                vg.chunks[chunkIndex].meshOld = createMeshGrid(vg.vRes, chunkSize, vg.chunks[chunkIndex].voxels)
-                
-                local v, t = triangulateChunk(vg.chunks[chunkIndex].voxels)
+   function render1(mx,my)
+      local voxelX = math.floor(mx / voxelSize)
+      local voxelY = math.floor(my / voxelSize)
+      
+      local chunkX = math.floor(voxelX / vg.vRes)
+      local chunkY = math.floor(voxelY / vg.vRes)
+      -- make it use the local voxels
+      voxelX = voxelX -  chunkX * vg.vRes
+      voxelY = voxelY - chunkY * vg.vRes
 
-                vg.chunks[chunkIndex].mesh = makeMesh(v,t)
+      
+      local chunkIndex = (chunkY * vg.cRes + chunkX) + 1
+      local voxelIndex = (voxelY * vg.vRes + voxelX) + 1
 
-             end
-             
-          end
-       end
-    end
+      if (chunkIndex <= vg.cRes^2 and voxelIndex <= vg.vRes^2) then
+         chunkIndices[chunkIndex] = {index=chunkIndex}
+         vg.chunks[chunkIndex].voxels[voxelIndex].state =  (fillType == 'filled')  and 1 or 0 
+      end
+   end
+
+   if  brushType == 'circle' then
+      for mx = xStart, xEnd do 
+         for my = yStart, yEnd do
+            local x = mx - px
+            local y = my - py
+            if (x * x + y * y <= (brushSize^2)) then
+                 if mx >-1 and my >-1 then
+                    render1(mx,my)
+                 end
+            end
+         end
+      end
+   end
+   
+   if  brushType == 'point' then
+      if mx >-1 and my >-1 then
+         render1(mx,my)
+      end
+   end
+
+   if brushType == 'rectangle' then
+      for mx = xStart, xEnd do 
+         for my = yStart, yEnd do
+            if mx >-1 and my >-1 then
+               render1(mx,my)
+            end
+         end
+      end
+   end
+
+   for k in pairs(chunkIndices) do
+      local v, t = triangulateChunk(vg.chunks[k].voxels)
+      vg.chunks[k].mesh = makeMesh(v,t)
+   end
+end
+   
+
+function love.draw()
+   local chunkSize = vg.size / vg.cRes
+   local voxelSize = chunkSize /  vg.vRes
+   
+   handleMouseClickStart()
+   
+   love.graphics.clear(.6,.6,.6)
+   love.graphics.setColor(1,1,1)
+   
+   drawUI()
+
+   love.graphics.setWireframe(false)
+   
+   for i = 1, #vg.chunks do
+      local chunk = vg.chunks[i]
+      if (chunk.mesh) then
+      love.graphics.draw(chunk.mesh,
+                         vg.xOff + chunk.pos[1],
+                         vg.yOff + chunk.pos[2])
+      end
+   end
+
+   
+   --debugDraw()
+  
+    
+   --love.graphics.draw(m, 10, 10)
+   local brush2 = math.floor(brushSize)*2
+   
+   
+   local mx, my = love.mouse.getPosition()
+   if mx >=vg.xOff and mx <= vg.size + vg.xOff then
+      if my >= vg.yOff and my <= vg.size  + vg.yOff then
+         mx = mx - vg.xOff
+         my = my - vg.yOff
+
+         if brushType == 'rectangle' then
+            love.graphics.setColor(.6,1,.6)
+            love.graphics.rectangle('fill',
+                                    vg.xOff + mx - math.ceil(brushSize),
+                                    vg.yOff + my - math.ceil(brushSize),
+                                    brush2,brush2)
+
+         end
+         if brushType == 'circle' then
+            love.graphics.setColor(.6,1,.6, .5)
+            love.graphics.circle('fill',
+                                 vg.xOff + mx ,
+                                 vg.yOff + my,
+                                 brush2/2)
+
+         end
+         
+         if love.mouse.isDown(1 ) then   
+            editVoxels(mx, my)
+         end
+      end
+   end
 
 
-    local noiseCellsize = vg.size / #grid
-    --print(noiseCellsize)
-    for x = 1, #grid do
-       for y = 1, #grid[1] do
+    -- local noiseCellsize = vg.size / #grid
+    -- print(noiseCellsize)
+    -- for x = 1, #grid do
+    --    for y = 1, #grid[1] do
           
-          if (grid[x][y] == 1) then
-             love.graphics.setColor(colors.sand[1], colors.sand[2], colors.sand[3], 0.2)
-          else
-             love.graphics.setColor(colors.dark[1], colors.dark[2], colors.dark[3], 0.2)
-          end
+    --       if (grid[x][y] == 1) then
+    --          love.graphics.setColor(colors.sand[1], colors.sand[2], colors.sand[3], 0.4)
+    --       else
+    --          love.graphics.setColor(colors.dark[1], colors.dark[2], colors.dark[3], 0.4)
+    --       end
 
-          love.graphics.rectangle('fill', x*noiseCellsize, y*noiseCellsize, noiseCellsize, noiseCellsize)
-       end
-    end
+    --       love.graphics.rectangle('fill', x*noiseCellsize, y*noiseCellsize, noiseCellsize, noiseCellsize)
+    --    end
+    -- end
     
     
-    
+    love.graphics.setColor(1,1,1)
    love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 0, 0)
 end
 
@@ -318,7 +495,6 @@ function makeMesh(vertices, triangles)
       {"VertexPosition", "float", 3} -- The x,y position of each vertex.
    }
    if (#vertices == 0) then return nil end
-   print(#vertices)
    local mesh = love.graphics.newMesh(simple_format, vertices, 'triangles')
    mesh:setVertexMap(triangles)
    --mesh:setDrawRange(1, 6)
@@ -442,8 +618,6 @@ function triangulateChunk(voxels)
       local index = 1
       for y = 0, cells-1 do
          for x= 0, cells-1 do
-            --print(index, index+1, index + vRes, index + vRes + 1)
-
             triangulateCell(voxels[index] ,
                             voxels[index+1],
                             voxels[index + vRes],
@@ -469,24 +643,6 @@ function simpleChunkyGrid(vRes, cRes, size)
    local chunks = {}
    local index = 1
 
-   -- function createVoxel(x,y)
-   --    local result = {}
-   --    result.pos = {(x + 0.5) * voxelSize, (y + 0.5) * voxelSize}
-   --    return result
-   -- end
- 
-   -- function initChunk(resolution, size)
-   --    local index = 1
-   --    local result = {voxels={}}
-   --    for y = 0, vRes do
-   --       for x = 0, vRes do
-   --          result.voxels[index] = createVoxel(x,y)
-   --          index = index + 1
-   --       end
-   --    end
-   --    return result
-   -- end
-
    function createVoxels()
       local result = {}
       local index = 1
@@ -494,7 +650,7 @@ function simpleChunkyGrid(vRes, cRes, size)
          for x = 0, vRes-1 do
             local position = {x=(x+.5)*voxelSize, y=(y+.5)*voxelSize}
             result[index] = {
-               state = 0, -- polarize(love.math.random()),
+               state = polarize(love.math.random()),
                position = position,
                xEdgePosition = {x=position.x + (voxelSize*.5), y=position.y},
                yEdgePosition = {x=position.x, y=position.y + (voxelSize*.5)},
@@ -505,19 +661,14 @@ function simpleChunkyGrid(vRes, cRes, size)
       return result
    end
 
-
-   
-   
    function initChunk(resolution, size)
       local result = {}
       result.voxels = createVoxels()
-
+      
       local v,t = triangulateChunk(result.voxels)
-
       result.mesh = makeMesh(v,t)
 
---      print(inspect(result.voxels))
-    --  result.meshOld = createMeshGrid(resolution, size, result.voxels)
+
       return result
    end
    
@@ -539,62 +690,3 @@ end
 
 
 
-function createMeshGrid(resolution, size, voxels)
-
-   -- vertices
-   local vertices = {}
-   local v = 1
-   local stepSize = 1.0/resolution
-   for y = 0, resolution do
-      for x = 0, resolution do
-         vertices[v] = { x * stepSize , y * stepSize , 0 } 
-         v = v + 1
-      end
-   end
-   
-
-   -- triangle indices
-   local tris = {}
-   local t = 1
-   local v1= 1
-   for y = 0, resolution-1 do
-      for x = 0, resolution-1 do
-         local index = y * (resolution) + x
-
-         if (voxels[index + 1].state == 0) then  -- cheap way of turning it off
-            for i = 0, 5 do
-               tris[t+i] = 1
-            end
-         else
-            tris[t]   = v1 
-            tris[t+1] = v1 + resolution + 1
-            tris[t+2] = v1 + 1
-            tris[t+3] = v1 + 1
-            tris[t+4] = v1 + resolution + 1
-            tris[t+5] = v1 + resolution + 2
-         end
-         t = t + 6
-         v1 = v1+1
-      end
-      v1 = v1+1
-
-   end
-   -----
-   
-
-
-   local simple_format = {
-      {"VertexPosition", "float", 3} -- The x,y position of each vertex.
-   }
-
-   for i = 1, #vertices do
-      vertices[i][1] =  vertices[i][1] * size  
-      vertices[i][2] =  vertices[i][2] * size 
-   end
-
-   local mesh = love.graphics.newMesh(simple_format, vertices, 'triangles')
-   mesh:setVertexMap(tris)
-   --mesh:setDrawRange(1, 6)
-   
-   return mesh
-end
