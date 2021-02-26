@@ -123,7 +123,7 @@ function love.load()
    grid = {}
    --noise()
 
-   vg = {vRes=32, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
+   vg = {vRes=80, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
    simpleChunkyGrid(vg.vRes, vg.cRes, vg.size)
 
 
@@ -231,23 +231,23 @@ function love.draw()
              --print(i, x,y,voxelIndex)
              --love.graphics.setColor(0,0,1, .3)
 
-             local dotSize = voxelSize/3
-             love.graphics.rectangle('fill',
-                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].position.x  - (dotSize/2),
-                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].position.y - (dotSize/2),
-                                     dotSize, dotSize)
+             -- local dotSize = voxelSize/3
+             -- love.graphics.rectangle('fill',
+             --                         vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].position.x  - (dotSize/2),
+             --                         vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].position.y - (dotSize/2),
+             --                         dotSize, dotSize)
 
-             love.graphics.setColor(0,0,0, .3)
-             local edgeDotSize = voxelSize/8
-             love.graphics.rectangle('fill',
-                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].xEdgePosition.x  - (edgeDotSize/2),
-                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].xEdgePosition.y - (edgeDotSize/2),
-                                     edgeDotSize, edgeDotSize)
+             -- love.graphics.setColor(0,0,0, .3)
+             -- local edgeDotSize = voxelSize/8
+             -- love.graphics.rectangle('fill',
+             --                         vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].xEdgePosition.x  - (edgeDotSize/2),
+             --                         vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].xEdgePosition.y - (edgeDotSize/2),
+             --                         edgeDotSize, edgeDotSize)
 
-             love.graphics.rectangle('fill',
-                                     vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].yEdgePosition.x  - (edgeDotSize/2),
-                                     vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].yEdgePosition.y - (edgeDotSize/2),
-                                     edgeDotSize, edgeDotSize)
+             -- love.graphics.rectangle('fill',
+             --                         vg.xOff + chunk.pos[1] + chunk.voxels[voxelIndex].yEdgePosition.x  - (edgeDotSize/2),
+             --                         vg.yOff + chunk.pos[2] + chunk.voxels[voxelIndex].yEdgePosition.y - (edgeDotSize/2),
+             --                         edgeDotSize, edgeDotSize)
              
              
              
@@ -477,7 +477,7 @@ function simpleChunkyGrid(vRes, cRes, size)
          for x = 0, vRes-1 do
             local position = {x=(x+.5)*voxelSize, y=(y+.5)*voxelSize}
             result[index] = {
-               state = polarize(love.math.random()),
+               state = 1, -- polarize(love.math.random()),
                position = position,
                xEdgePosition = {x=position.x + (voxelSize*.5), y=position.y},
                yEdgePosition = {x=position.x, y=position.y + (voxelSize*.5)},
