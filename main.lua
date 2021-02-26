@@ -86,7 +86,7 @@ function love.keypressed(key)
    if key == 'escape' then
       love.event.quit()
    end
-   --noise()
+   noise()
 end
 
 function polarize(value)
@@ -100,8 +100,8 @@ function noise()
    local offsetY = love.math.random() * 2^12
 
    local octaves = {3*13*4, 3*13*3, 3*13*.33}
-   for x = 1, 128*3 do
-      for y = 1, 128*3 do
+   for x = 1, 128 do
+      for y = 1, 128 do
          grid[x] = grid[x] or {}
 
          local octave1 =  love.math.noise((offsetX + x)/octaves[1], (offsetY + y)/octaves[1])
@@ -121,9 +121,9 @@ function love.load()
       dark  = {.46, .33, .22}
    }
    grid = {}
-   --noise()
+   noise()
 
-   vg = {vRes=80, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
+   vg = {vRes=128, cRes=1, size=1000, xOff = 20, yOff=20, chunks={}}
    simpleChunkyGrid(vg.vRes, vg.cRes, vg.size)
 
 
@@ -291,6 +291,23 @@ function love.draw()
           end
        end
     end
+
+
+    local noiseCellsize = vg.size / #grid
+    --print(noiseCellsize)
+    for x = 1, #grid do
+       for y = 1, #grid[1] do
+          
+          if (grid[x][y] == 1) then
+             love.graphics.setColor(colors.sand[1], colors.sand[2], colors.sand[3], 0.2)
+          else
+             love.graphics.setColor(colors.dark[1], colors.dark[2], colors.dark[3], 0.2)
+          end
+
+          love.graphics.rectangle('fill', x*noiseCellsize, y*noiseCellsize, noiseCellsize, noiseCellsize)
+       end
+    end
+    
     
     
    love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 0, 0)
@@ -477,7 +494,7 @@ function simpleChunkyGrid(vRes, cRes, size)
          for x = 0, vRes-1 do
             local position = {x=(x+.5)*voxelSize, y=(y+.5)*voxelSize}
             result[index] = {
-               state = 1, -- polarize(love.math.random()),
+               state = 0, -- polarize(love.math.random()),
                position = position,
                xEdgePosition = {x=position.x + (voxelSize*.5), y=position.y},
                yEdgePosition = {x=position.x, y=position.y + (voxelSize*.5)},
@@ -500,7 +517,7 @@ function simpleChunkyGrid(vRes, cRes, size)
       result.mesh = makeMesh(v,t)
 
 --      print(inspect(result.voxels))
-      result.meshOld = createMeshGrid(resolution, size, result.voxels)
+    --  result.meshOld = createMeshGrid(resolution, size, result.voxels)
       return result
    end
    
