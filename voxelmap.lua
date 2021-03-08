@@ -69,7 +69,7 @@ function VoxelMap:editVoxels(point, value)
 
    
    -- radius goes from 0 to 5?
-   local radius = 1.45
+   local radius = 16.45
    local xStart = (centerX - radius  - 0) / self.voxelResolution
    if xStart < 0 then xStart = 0 end
    local xEnd = (centerX + radius  - 0) / self.voxelResolution

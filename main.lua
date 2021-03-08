@@ -103,4 +103,10 @@ function love.draw()
    love.graphics.rectangle('fill', ckx,cky, ckx2 - ckx, cky2 - cky)
 
    --value = -1
+
+    love.graphics.setColor(0,0,0)
+   love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 0, 0)
+   love.graphics.setColor(1,1,1)
+   love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 1, 1)
+
 end
