@@ -22,20 +22,17 @@ function VoxelGrid:new(resolution, size)
       end
    end
    self.resolution = resolution
-   --self:triangulate()
-   --print(self.gridSize, self.voxelSize)
    return self
 end
 
 function makeMesh(vertices, triangles)
    local simple_format = {
-      {"VertexPosition", "float", 3} -- The x,y position of each vertex.
+      {"VertexPosition", "float", 3}, -- The x,y position of each vertex.
+      --{"VertexColor", "float", 4}
    }
    if (#vertices == 0) then return nil end
    local mesh = love.graphics.newMesh(simple_format, vertices, 'triangles')
    mesh:setVertexMap(triangles)
-   --mesh:setDrawRange(1, 6)
-   
    return mesh
 end
 
@@ -43,11 +40,9 @@ end
 function VoxelGrid:triangulate()
    self.vertices = {}
    self.triangles = {}
-
    
    if self.xNeighbor ~= nil then
       self.dummyX:becomeXDummyOf(self.xNeighbor.voxels[1], self.gridSize)
-
    end
    
    self:triangulateCellRows()
@@ -56,8 +51,9 @@ function VoxelGrid:triangulate()
       self:triangulateGapRow();
    end
    
+   local r = love.math.random()
    for i = 1, #self.vertices do
-      self.vertices[i] = {self.vertices[i][1] * 500, self.vertices[i][2] * 500, 0}
+      self.vertices[i] = {self.vertices[i][1] * 500, self.vertices[i][2] * 500, 0 }
    end
    
    self.mesh = makeMesh(self.vertices, self.triangles)
@@ -85,19 +81,12 @@ function VoxelGrid:triangulateCellRows()
 
 end
 
-
-
-
-
-
 function VoxelGrid:triangulateGapCell(i)
    local dummySwap = self.dummyT
-   
    dummySwap:becomeXDummyOf(self.xNeighbor.voxels[i + 1], self.gridSize )
    self.dummyT = self.dummyX
    self.dummyX = dummySwap
    self:triangulateCell(self.voxels[i], self.dummyT,     self.voxels[i + self.resolution], self.dummyX)
-
 end
 
 function VoxelGrid:triangulateGapRow()
@@ -115,16 +104,10 @@ function VoxelGrid:triangulateGapRow()
    if (self.xNeighbor ~= nil) then
       self.dummyT:becomeXYDummyOf(self.xyNeighbor.voxels[1], self.gridSize)
       self:triangulateCell(self.voxels[#self.voxels], self.dummyX, self.dummyY, self.dummyT)
-
    end
-   
-   
 end
 
-
-
 function VoxelGrid:triangulateCell(a,b,c,d)
-   --print(a,b,c,d)
    local cellType = 0
    if (a.state == 1) then
       cellType = cellType + 1
@@ -141,7 +124,6 @@ function VoxelGrid:triangulateCell(a,b,c,d)
 
 
    function addPentagon(a,b,c,d,e)
-      
       local vertexIndex = #self.vertices + 1
       table.insert(self.vertices, {a.x, a.y, 0})
       table.insert(self.vertices, {b.x, b.y, 0})
@@ -224,13 +206,6 @@ function VoxelGrid:triangulateCell(a,b,c,d)
       elseif cellType == 15 then
          addQuad(a.position, c.position, d.position, b.position);
       end
-   
-   --print(a,b,c,d, cellType)
-end
-
-
-function VoxelGrid:dong()
-   print("Oh yeAs!")
 end
 
 function VoxelGrid:__tostring()

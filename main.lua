@@ -1,6 +1,61 @@
 local inspect = require './inspect'
 VoxelMap = require './voxelmap'
 
+function pointInRect(x,y, rx, ry, rw, rh)
+   if x < rx or y < ry then return false end
+   if x > rx+rw or y > ry+rh then return false end
+   return true
+end
+
+function handleMouseClickStart()
+   mouseState.hoveredSomething = false
+   mouseState.down = love.mouse.isDown(1 )
+   mouseState.click = false
+   mouseState.released = false
+   if mouseState.down ~= mouseState.lastDown then
+      if mouseState.down  then
+         mouseState.click  = true
+      else
+	 mouseState.released = true
+      end
+   end
+   mouseState.lastDown =  mouseState.down
+end
+ 
+function labelButton(x,y,label, selected )
+   local result= false
+   local w = font and font:getWidth( label ) or love.graphics.getFont():getWidth(label)
+   local h = font and font:getHeight( label ) or love.graphics.getFont():getHeight(label) 
+
+   love.graphics.setColor(0,0,0)
+
+   local mx,my = love.mouse.getPosition()
+   if pointInRect (mx,my, x,y,w,h) then
+      love.graphics.setColor(.3,.2,.9)
+   end
+   if selected then
+      love.graphics.setColor(.8,.3,.3)
+   end
+
+   
+   love.graphics.rectangle('fill',x-5,y-2,w+10,h+4)
+   love.graphics.setColor(1,1,1)
+   love.graphics.rectangle('line',x-5,y-2,w+10,h+4)
+   love.graphics.print(label, x, y)
+
+   if mouseState.click then
+      local mx, my = love.mouse.getPosition( )
+      if pointInRect(mx,my, x,y,w,h) then
+         result = true
+      end
+   end
+
+   return {
+      clicked=result
+   }
+end
+
+
 function love.keypressed(key)
    if key == 'escape' then
       love.event.quit()
@@ -14,25 +69,46 @@ function love.load()
       brown = {.63, .47, .33},
       dark  = {.46, .33, .22}
     }
-    m = VoxelMap.new(32, 4)
-    value = -1
-end
+    m = VoxelMap.new(32/4, 6)
 
-function love.mousepressed(mx, my, button)
-  
-   value = button
-
+    mouseState = {
+      hoveredSomething = false,
+      down = false,
+      lastDown = false,
+      click = false,
+      offset = {x=0, y=0}
+   }
+   --lastDraggedElement = {}
+    radii = {.125, .25, .5, .75, 1,2,3,4,5,6,7,8,9, 12, 16, 32}
+    fillRadius = 2
+    fillTypes = {'rectangle','circle'}
+    fillType = 'circle'
 end
-function love.mousereleased(mx, my, button)
-   value = -1
-end
-
 
 function love.draw()
+   handleMouseClickStart()
    love.graphics.clear(colors.bg[1],colors.bg[2],colors.bg[3])
    love.graphics.setColor(colors.brown[1],colors.brown[2],colors.brown[3])
    local size = 500
    local mx, my = love.mouse.getPosition()
+
+   
+   local runningX = 1000 
+   for i = 1, #radii do
+      if labelButton(runningX, 20, radii[i], radii[i] == fillRadius).clicked then
+         fillRadius = radii[i]
+      end
+      runningX = runningX + 25
+   end
+   
+   runningX = 1000 
+  
+   for i = 1, #fillTypes do
+      if labelButton(runningX, 20 + 40, fillTypes[i], fillTypes[i] == fillType).clicked then
+         fillType = fillTypes[i]
+      end
+      runningX = runningX +  love.graphics.getFont():getWidth(fillTypes[i]) + 5
+   end
    
    
    love.graphics.push()
@@ -50,7 +126,7 @@ function love.draw()
             x = (chunk.localPos.x + chunk.voxels[j].position.x) * size,
             y = (chunk.localPos.y + chunk.voxels[j].position.y) * size
          }
-         
+              
          local xEdge = {
             x = (chunk.localPos.x + chunk.voxels[j].xEdgePosition.x) * size,
             y = (chunk.localPos.y + chunk.voxels[j].xEdgePosition.y) * size
@@ -74,9 +150,16 @@ function love.draw()
    end
    
    love.graphics.pop()
+   local value = -1
+   if (love.mouse.isDown(1)) then
+      value = 0
+   end
+   if (love.mouse.isDown(2)) then
+      value = 1
+   end
    
 
-   local sx,sy,ex,ey, cx, cy = m:editVoxels({x=mx/size,y=my/size}, value)
+   local sx,sy,ex,ey, cx, cy = m:editVoxels({x=mx/size,y=my/size}, value, fillRadius, fillType)
    local w = (ex-sx)
    local h = (ey-sy)
 
@@ -85,9 +168,12 @@ function love.draw()
    love.graphics.setColor(colors.sand[1],colors.sand[2],colors.sand[3], 0.5)
    love.graphics.rectangle('fill',f(sx)   ,f(sy)  , f(w) , f(h) )
    love.graphics.setColor(1,0,0, 0.75)
-   love.graphics.rectangle('line',f(sx)   ,f(sy)  , f(w) , f(h) )
-
-   love.graphics.circle('line', f(sx) + f(w)/2     ,f(sy) +  f(h)/2, f(w)/2 , f(h)/2 )
+   if fillType == 'rectangle' then
+      love.graphics.rectangle('line',f(sx)   ,f(sy)  , f(w) , f(h) )
+   end
+   if fillType == 'circle' then
+      love.graphics.circle('line', f(sx) + f(w)/2     ,f(sy) +  f(h)/2, f(w)/2 , f(h)/2 )
+   end
    --print(math.floor((sx * m.chunkResolution) +.5) , math.floor((ex * m.chunkResolution) -.5) )
    love.graphics.rectangle('fill',f(cx) - 5 ,f(cy) - 5, 10, 10)
 
@@ -108,5 +194,5 @@ function love.draw()
    love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 0, 0)
    love.graphics.setColor(1,1,1)
    love.graphics.print("fps: "..tostring(love.timer.getFPS( )), 1, 1)
-
+   
 end
