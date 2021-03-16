@@ -108,7 +108,7 @@ function love.load()
       brown = {.63, .47, .33},
       dark  = {.46, .33, .22}
     }
-    m = VoxelMap.new(32/4, 6)
+    m = VoxelMap.new(16, 8 )
 
     mouseState = {
       hoveredSomething = false,
@@ -155,7 +155,7 @@ function love.draw()
    
    for i = 1, #m.chunks do
       local chunk = m.chunks[i]
-      if chunk.mesh then
+      if chunk.mesh  then
          --print('hi hello?', 100, 100)
          love.graphics.draw(chunk.mesh, chunk.localPos.x * size, chunk.localPos.y * size)
       end
