@@ -93,7 +93,7 @@ function VoxelGrid:cacheNextEdgeAndCorner (i, xMin, xMax)
    --print('test', i, xMin, xMax)
    --print(i, xMin.state, xMax.state)
    if (xMin.state ~= xMax.state) then
-      self.rowCacheMax[i + 1] = #self.vertices 
+      self.rowCacheMax[i + 1] = #self.vertices + 1
       local data  = {xMin.xEdge,
          xMin.position.y,
          0}
@@ -113,7 +113,7 @@ function VoxelGrid:fillFirstRowCache()
    self:cacheFirstCorner(self.voxels[1])
    
    
-   for i = 1, self.resolution do
+   for i = 1, self.resolution-1 do
       self:cacheNextEdgeAndCorner(i*2, self.voxels[i], self.voxels[i+1])
      
    end
@@ -210,7 +210,7 @@ function VoxelGrid:triangulateGapRow()
       dummySwap:becomeYDummyOf(self.yNeighbor.voxels[x + 1], self.gridSize);
       self.dummyT = self.dummyY
       self.dummyY = dummySwap
-      local cacheIndex = x * 2 + 1
+      local cacheIndex = x * 2
       self:cacheNextEdgeAndCorner(cacheIndex, self.dummyT, self.dummyY)
       self:cacheNextMiddleEdge(self.voxels[x + offset + 1], self.dummyY)
 		
