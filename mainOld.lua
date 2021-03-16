@@ -39,10 +39,13 @@ function handleMouseClickStart()
    end
    mouseState.lastDown =  mouseState.down
 end
-
+ m
 function labelButton(x,y,label, selected )
-   local result= false
-   local w = font and font:getWidth( label ) or love.graphics.getFont():getWidth(label)
+0.   local result= false
+
+
+
+local w = font and font:getWidth( label ) or love.graphics.getFont():getWidth(label)
    local h = font and font:getHeight( label ) or love.graphics.getFont():getHeight(label) 
 
    love.graphics.setColor(0,0,0)
@@ -66,6 +69,7 @@ function labelButton(x,y,label, selected )
       clicked=result
    }
 end
+
 
 function mapInto(x, in_min, in_max, out_min, out_max)
    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min

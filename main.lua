@@ -55,6 +55,45 @@ function labelButton(x,y,label, selected )
    }
 end
 
+function clamp(value, min, max)
+   local result = value
+   if value < min then result = min end
+   if value > max then result = max end
+   return result
+end
+
+
+
+
+function love.wheelmoved(x,y)
+   
+   if love.keyboard.isDown("lctrl") then
+      local currentIndex = nil
+      for i=1, #radii do
+         if fillRadius == radii[i] then
+            currentIndex = i
+         end
+      end
+      newIndex = currentIndex + ((y>0 and 1) or -1)
+      newIndex = clamp(newIndex, 1, #radii)
+      
+      fillRadius = radii[newIndex]
+   end
+    if love.keyboard.isDown("lalt") then
+      local currentIndex = nil
+      for i=1, #radii do
+         if fillType == fillTypes[i] then
+            currentIndex = i
+         end
+      end
+      newIndex = currentIndex + ((y>0 and 1) or -1)
+      newIndex = clamp(newIndex, 1, #fillTypes)
+      
+      fillType = fillTypes[newIndex]
+   end
+   
+end
+
 
 function love.keypressed(key)
    if key == 'escape' then
