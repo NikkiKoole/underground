@@ -17,10 +17,15 @@ end
 
 function Voxel:new(x, y, size)
    local self = setmetatable({}, Voxel)
-   self.state           = polarize(love.math.random())
+   self.state           = 1 -- polarize(love.math.random())
    self.position        = {x=(x+.5) * size, y=(y+.5) * size}
+   
    self.xEdgePosition   = {x=self.position.x + (size*.5), y=self.position.y}
    self.yEdgePosition   = {x=self.position.x , y=self.position.y + (size*.5)}
+
+   self.xEdge = self.position.x + size*.5
+   self.yEdge = self.position.y + size*.5
+
    return self
 end
 
@@ -43,6 +48,9 @@ function Voxel:becomeXDummyOf(voxel, offset)
    self.position.x = self.position.x + offset
    self.xEdgePosition.x = self.xEdgePosition.x + offset
    self.yEdgePosition.x = self.yEdgePosition.x + offset
+
+   self.xEdge = voxel.xEdge + offset
+   self.yEdge = voxel.yEdge
 end
 
 function Voxel:becomeYDummyOf(voxel, offset)
@@ -63,6 +71,9 @@ function Voxel:becomeYDummyOf(voxel, offset)
    self.position.y = self.position.y + offset
    self.xEdgePosition.y = self.xEdgePosition.y + offset
    self.yEdgePosition.y = self.yEdgePosition.y + offset
+
+   self.xEdge = voxel.xEdge;
+   self.yEdge = voxel.yEdge + offset;
 end
 
 function Voxel:becomeXYDummyOf(voxel, offset)
@@ -85,6 +96,9 @@ function Voxel:becomeXYDummyOf(voxel, offset)
    self.yEdgePosition.x = self.yEdgePosition.x + offset
    self.xEdgePosition.y = self.xEdgePosition.y + offset
    self.yEdgePosition.y = self.yEdgePosition.y + offset
+
+   self.xEdge = voxel.xEdge + offset;
+   self.yEdge = voxel.yEdge + offset;
 end
 
 

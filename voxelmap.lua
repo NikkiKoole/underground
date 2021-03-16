@@ -110,8 +110,9 @@ function VoxelMap:editVoxels(point, value, radius, formtype)
          
          -- end circle
          --print( self.chunkResolution^2, , self.voxelResolution^2, voxelIndex )
-
+        
          if chunkIndex < self.chunkResolution^2 and voxelIndex < self.voxelResolution^2 then
+            --print(#(self.chunks[chunkIndex + 1].voxels), 'voxel count')
             if value > -1  and draw then
                --print(voxelIndex, self.voxelResolution^2)
                self.chunks[chunkIndex + 1].voxels[voxelIndex + 1].state = value
