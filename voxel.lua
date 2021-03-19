@@ -17,7 +17,7 @@ end
 
 function Voxel:new(x, y, size)
    local self = setmetatable({}, Voxel)
-   self.state           = 1 -- polarize(love.math.random())
+   self.state           = 0 -- polarize(love.math.random())
    self.position        = {x=(x+.5) * size, y=(y+.5) * size}
    
    self.xEdgePosition   = {x=self.position.x + (size*.5), y=self.position.y}

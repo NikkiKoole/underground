@@ -60,8 +60,8 @@ function VoxelMap:editVoxels(point, value, radius, formtype)
    local useFloat = true
    local centerX, centerY
    if (useFloat) then
-      centerX = ((point.x) / self.voxelSize)  ---.5
-      centerY = ((point.y) / self.voxelSize)  ---.5
+      centerX = ((point.x) / self.voxelSize) - .5
+      centerY = ((point.y) / self.voxelSize) - .5
    else
       centerX = math.floor((point.x) / self.voxelSize) - .5
       centerY = math.floor((point.y) / self.voxelSize) - .5
@@ -136,16 +136,18 @@ function VoxelMap:editVoxels(point, value, radius, formtype)
    if (value > -1) then
    
       -- extra offset for out of territory triangulating
-      for chunkY = math.floor(yEnd) , math.floor(yStart) - 1 , -1 do
-         for chunkX = math.floor(xEnd) , math.floor(xStart) - 1 , -1 do
+      
+      for chunkY = math.floor(yEnd) , math.floor(yStart)  -1, -1 do
+         for chunkX = math.floor(xEnd) , math.floor(xStart)  -1, -1 do
 
             if chunkX >= 0 and chunkY >= 0 then
             local chunkIndex =  math.floor(chunkX) + (math.floor(chunkY) * self.chunkResolution)
 
             activeStencil.radius = radius
-            activeStencil:setCenter(centerX - chunkX * self.voxelResolution, centerY - chunkY * self.voxelResolution );
+            activeStencil:setCenter((centerX - (chunkX * self.voxelResolution) ),
+                                    (centerY - (chunkY * self.voxelResolution) ) );
             
-            print('chunkIndex center, is it too big or small?', centerX, centerY, chunkX * self.voxelResolution, chunkY * self.voxelResolution )
+            print('chunkIndex center, is it too big or small?', chunkIndex, centerX, centerY, chunkX * self.voxelResolution, chunkY * self.voxelResolution )
             
             if chunkIndex < self.chunkResolution^2  then
                self.chunks[chunkIndex + 1]:apply(activeStencil, value)
@@ -155,8 +157,6 @@ function VoxelMap:editVoxels(point, value, radius, formtype)
          end
       end
 
-
-      
        
    
  end

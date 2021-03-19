@@ -110,9 +110,13 @@ end
 
 function VoxelGrid:apply(stencil, value)
    --print('voxelgrid apply: ', self.localPos.x, self.localPos.y)
-   local xStart= stencil:xStart() 
+   local xStart= stencil:xStart()
+   print('xStart before', xStart)
    if xStart < 0 then xStart = 0 end
+   
    local xEnd= stencil:xEnd() 
+   print('xEnd before', xEnd)
+
    if xEnd > self.resolution then xEnd = self.resolution end
 
    local yStart= stencil:yStart() 
@@ -126,8 +130,8 @@ function VoxelGrid:apply(stencil, value)
          i = i + 1
          if i <= #self.voxels then
             --print(i)
-           
-               stencil:apply(self.voxels[i], value, self)
+            print(x, y)
+            stencil:apply(self.voxels[i], value)
 
             
             --self.voxels[i].state = value
