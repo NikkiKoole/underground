@@ -22,7 +22,14 @@ function Voxel:new(x, y, size)
    
    self.xEdgePosition   = {x=self.position.x + (size*.5), y=self.position.y}
    self.yEdgePosition   = {x=self.position.x , y=self.position.y + (size*.5)}
+   --print(x,y, x%16, y%16)
 
+   --local wigglex = ((x%16)/16) -.5
+   --local wiggley = ((y%16)/16) -.5
+   --print(x, wigglex)
+   --self.xEdgePosition   = {x=self.position.x + (size*.5) + wigglex*.1, y=self.position.y + wiggley*.1 }
+   --self.yEdgePosition   = {x=self.position.x +  wigglex*.05  , y=self.position.y + (size*.5) +  wiggley*.05 }
+  
    self.xEdge = self.position.x + size*.5
    self.yEdge = self.position.y + size*.5
 

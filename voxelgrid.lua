@@ -22,6 +22,7 @@ function VoxelGrid:new(resolution, size)
       end
    end
    self.resolution = resolution
+   print(resolution)
    return self
 end
 
@@ -106,6 +107,35 @@ function VoxelGrid:triangulateGapRow()
       self:triangulateCell(self.voxels[#self.voxels], self.dummyX, self.dummyY, self.dummyT)
    end
 end
+
+function VoxelGrid:apply(stencil, value)
+   --print('voxelgrid apply: ', self.localPos.x, self.localPos.y)
+   local xStart= stencil:xStart() 
+   if xStart < 0 then xStart = 0 end
+   local xEnd= stencil:xEnd() 
+   if xEnd > self.resolution then xEnd = self.resolution end
+
+   local yStart= stencil:yStart() 
+   if yStart < 0 then yStart = 0 end
+   local yEnd= stencil:yEnd()
+   if yEnd > self.resolution then yEnd = self.resolution end
+
+   for y = yStart, yEnd do
+      for x = xStart, xEnd do
+         local i = math.floor(y) * self.resolution + math.floor(x)
+         i = i + 1
+         if i <= #self.voxels then
+            --print(i)
+           
+               stencil:apply(self.voxels[i], value, self)
+
+            
+            --self.voxels[i].state = value
+         end
+      end
+   end
+end
+
 
 function VoxelGrid:triangulateCell(a,b,c,d)
    local cellType = 0

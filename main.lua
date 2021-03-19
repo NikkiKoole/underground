@@ -1,5 +1,8 @@
 local inspect = require './inspect'
 VoxelMap = require './voxelmap'
+Stencil = require './stencil'
+CircleStencil = require './circle-stencil'
+
 
 function pointInRect(x,y, rx, ry, rw, rh)
    if x < rx or y < ry then return false end
@@ -78,8 +81,7 @@ function love.wheelmoved(x,y)
       newIndex = clamp(newIndex, 1, #radii)
       
       fillRadius = radii[newIndex]
-   end
-    if love.keyboard.isDown("lalt") then
+   elseif love.keyboard.isDown("lalt") then
       local currentIndex = nil
       for i=1, #radii do
          if fillType == fillTypes[i] then
@@ -90,7 +92,10 @@ function love.wheelmoved(x,y)
       newIndex = clamp(newIndex, 1, #fillTypes)
       
       fillType = fillTypes[newIndex]
+   else
+      scale = scale * ((y>0 and 1.1) or .9)
    end
+   
    
 end
 
@@ -102,13 +107,14 @@ function love.keypressed(key)
 end
 
 function love.load()
+   scale = 1
     colors = {
       bg    = {.95, .89, .73},
       sand  = {.79, .73, .59},
       brown = {.63, .47, .33},
       dark  = {.46, .33, .22}
     }
-    m = VoxelMap.new(16, 8 )
+    m = VoxelMap.new(8, 4 )
 
     mouseState = {
       hoveredSomething = false,
@@ -122,6 +128,16 @@ function love.load()
     fillRadius = 2
     fillTypes = {'rectangle','circle'}
     fillType = 'circle'
+
+    --local s = Stencil:new()
+    --local s2 = CircleStencil:new()
+    --print((s), (s2))
+    --s:woof()
+    --s:stuff()
+    --s2:woof()
+    --s2:stuff()
+    --s2:setCenter(100,100)
+    --print(s2:xStart())
 end
 
 function love.draw()
@@ -152,7 +168,7 @@ function love.draw()
    
    love.graphics.push()
    love.graphics.translate(size, size)   
-   
+   love.graphics.scale(scale, scale)   
    for i = 1, #m.chunks do
       local chunk = m.chunks[i]
       if chunk.mesh  then
