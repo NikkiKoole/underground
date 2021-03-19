@@ -114,7 +114,7 @@ function love.load()
       brown = {.63, .47, .33},
       dark  = {.46, .33, .22}
     }
-    m = VoxelMap.new(8, 4 )
+    m = VoxelMap.new(16, 4 )
 
     mouseState = {
       hoveredSomething = false,
