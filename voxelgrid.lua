@@ -109,35 +109,35 @@ function VoxelGrid:triangulateGapRow()
 end
 
 function VoxelGrid:apply(stencil, value)
-   --print('voxelgrid apply: ', self.localPos.x, self.localPos.y)
-   local xStart= stencil:xStart()
-   print('xStart before', xStart)
-   if xStart < 0 then xStart = 0 end
+   -- --print('voxelgrid apply: ', self.localPos.x, self.localPos.y)
+   -- local xStart= stencil:xStart()
+   -- print('xStart before', xStart)
+   -- if xStart < 0 then xStart = 0 end
    
-   local xEnd= stencil:xEnd() 
-   print('xEnd before', xEnd)
+   -- local xEnd= stencil:xEnd() 
+   -- print('xEnd before', xEnd)
 
-   if xEnd > self.resolution then xEnd = self.resolution end
+   -- if xEnd > self.resolution then xEnd = self.resolution end
 
-   local yStart= stencil:yStart() 
-   if yStart < 0 then yStart = 0 end
-   local yEnd= stencil:yEnd()
-   if yEnd > self.resolution then yEnd = self.resolution end
+   -- local yStart= stencil:yStart() 
+   -- if yStart < 0 then yStart = 0 end
+   -- local yEnd= stencil:yEnd()
+   -- if yEnd > self.resolution then yEnd = self.resolution end
 
-   for y = yStart, yEnd do
-      for x = xStart, xEnd do
-         local i = math.floor(y) * self.resolution + math.floor(x)
-         i = i + 1
-         if i <= #self.voxels then
-            --print(i)
-            print(x, y)
-            stencil:apply(self.voxels[i], value)
+   -- for y = yStart, yEnd do
+   --    for x = xStart, xEnd do
+   --       local i = math.floor(y) * self.resolution + math.floor(x)
+   --       i = i + 1
+   --       if i <= #self.voxels then
+   --          --print(i)
+   --          print(x, y)
+   --          stencil:apply(self.voxels[i], value)
 
             
-            --self.voxels[i].state = value
-         end
-      end
-   end
+   --          --self.voxels[i].state = value
+   --       end
+   --    end
+   -- end
 end
 
 
